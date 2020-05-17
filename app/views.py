@@ -5,7 +5,7 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 import os
-from app import app,forms,ALLOWED_EXTENSIONS
+from app import app,forms
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.utils import secure_filename
 from .forms import UploadForm
@@ -32,30 +32,35 @@ def upload():
         abort(401)
 
     # Instantiate your form class
-    uploadform=UploadForm()
+    form=UploadForm()
 
     # Validate file upload on submit
-    if request.method == 'POST' and uploadform.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         # Get file data and save to your uploads folder
-        image = uploadform.image.data 
-        description = uploadform.description.data
+        image = form.image.data 
+        description = form.description.data
 
         filename = secure_filename(image.filename)
         image.save(os.path.join(
             app.config['UPLOAD_FOLDER'], filename
         ))
-        """return render_template('upload.html', filename=filename, description=description)"""
-    flash('File Saved', 'success')
-    """return redirect(url_for('home'))"""
-    return render_template('upload.html', form=uploadform)
+        flash('File Saved', 'success')
+        return redirect(url_for('home'))
+    elif request.method == 'GET':
+        return render_template('upload.html', form=form)
+    return render_template('upload.html')
+   
 
 
 def get_uploaded_images():
     files=[]
-    for cwd, subdirs, files in os.walk(app.config['UPLOAD_FOLDER']):
+    required_extensions = [".jpg",".png",".jpeg"]
+    for subdirs, files in os.walk(app.config['UPLOAD_FOLDER']):
         for file in files:
-            if file.split('.')[-1] in ALLOWED_EXTENSIONS:
-                listfiles.append(file)
+            f = os.path.splitext(os.path.basename(subdir))
+            if f[1] in required_extensions:
+                print(f)
+                files.append(os.path.join(f, file))
     return files
 
 @app.route('/files')
